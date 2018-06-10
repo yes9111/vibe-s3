@@ -160,6 +160,13 @@ class S3 : RESTClient
         enforce(region.length, "AWS region should be defined.");
         super(bucket ~ ".s3-" ~ region ~ ".amazonaws.com", region, "s3", credsSource, config);
     }
+    
+    this(string bucket, string region, string endpoint, AWSCredentialSource credsSource, ClientConfiguration config = ClientConfiguration())
+    {
+        this.bucket = bucket;
+        enforce(region.length, "AWS region should be defined.");
+        super(bucket ~ "." ~ region ~ "." ~ endpoint, region, "s3", credsSource, config);
+    }
 
     auto list(string delimiter = null, string prefix = null, string marker = null, uint maxKeys = 0)
     {
@@ -199,10 +206,10 @@ class S3 : RESTClient
         if (result.isTruncated)
             result.nextMarker = response.querySelector("ListBucketResult NextMarker").innerText;
 
-        auto entries = response.querySelector("ListBucketResult Contents");
+        auto entries = response.querySelectorAll("ListBucketResult Contents");
 
         result.resources.reserve = 1000;
-        foreach(node; entries.children)
+        foreach(node; entries)
         {
             BucketListResult.S3Resource entry;
             BucketListResult.S3Resource.Owner owner;
@@ -212,7 +219,7 @@ class S3 : RESTClient
             entry.etag = node.querySelector("ETag").innerText;
             entry.size = node.querySelector("Size").innerText.to!ulong;
             import std.conv;
-            entry.storageClass = node.querySelector("StorageClass")[0].innerText.to!StorageClass;
+            entry.storageClass = node.querySelector("StorageClass").innerText.to!StorageClass;
 
             result.resources.assumeSafeAppend ~= entry;
         }

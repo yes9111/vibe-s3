@@ -16,3 +16,4 @@ untitled.sublime-workspace
 
 vibe-s3-test-library
 examples/s3_ranges/test-aws-s3
+*.swp
