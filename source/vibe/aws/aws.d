@@ -526,7 +526,7 @@ private void signRequest(HTTPClientRequest req, string[string] queryParameters,
     }
     signRequest.canonicalRequest.payload = requestBody;
 
-    ubyte[] signKey = signingKey(creds.accessKeySecret, dateString, region, service);
+    ubyte[] signKey = signingKey(creds.accessKeySecret, dateString, region, service).dup;
     ubyte[] stringToSign = cast(ubyte[])signableString(signRequest);
     auto signature = sign(signKey, stringToSign);
 
