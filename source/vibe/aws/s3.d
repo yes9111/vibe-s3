@@ -1,12 +1,15 @@
 ﻿module vibe.aws.s3;
 
-import vibe.d;
+import vibe.inet.message : InetHeaderMap;
 import vibe.core.stream;
+import vibe.http.common : HTTPMethod;
+import vibe.http.client : HTTPClientResponse;
 
 import vibe.aws.aws;
 import vibe.aws.credentials;
 import vibe.aws.sigv4;
 
+import std.datetime : SysTime;
 import std.typecons: Tuple, tuple;
 
 enum StorageClass: string
@@ -46,6 +49,8 @@ struct BucketListResult
 
 auto listFilesRecursive(S3 client, string path = null)
 {
+    import std.algorithm : endsWith;
+    import std.range : empty;
     if(!path.empty && !path.endsWith("/"))
         path ~= "/";
     return S3Resources(client, null, path);
@@ -53,6 +58,8 @@ auto listFilesRecursive(S3 client, string path = null)
 
 auto listFiles(S3 client, string path = null)
 {
+    import std.algorithm: endsWith;
+    import std.range : empty;
     if(!path.empty && !path.endsWith("/"))
         path ~= "/";
     return S3Resources(client, "/", path);
@@ -60,6 +67,8 @@ auto listFiles(S3 client, string path = null)
 
 auto listFolders(S3 client, string path = null)
 {
+    import std.algorithm: endsWith;
+    import std.range : empty;
     if(!path.empty && !path.endsWith("/"))
         path ~= "/";
     return S3Prefixes(client, "/", path);
@@ -156,6 +165,7 @@ class S3 : RESTClient
 
     this(string bucket, string region, AWSCredentialSource credsSource, ClientConfiguration config = ClientConfiguration())
     {
+        import std.exception : enforce;
         this.bucket = bucket;
         enforce(region.length, "AWS region should be defined.");
         super(bucket ~ ".s3-" ~ region ~ ".amazonaws.com", region, "s3", credsSource, config);
@@ -163,6 +173,7 @@ class S3 : RESTClient
     
     this(string bucket, string region, string endpoint, AWSCredentialSource credsSource, ClientConfiguration config = ClientConfiguration())
     {
+        import std.exception : enforce;
         this.bucket = bucket;
         enforce(region.length, "AWS region should be defined.");
         super(bucket ~ "." ~ region ~ "." ~ endpoint, region, "s3", credsSource, config);
@@ -175,6 +186,7 @@ class S3 : RESTClient
         import memutils.all;
         import std.stdio;
         import std.conv;
+        import std.string : toLower;
 
         InetHeaderMap headers;
         string[string] queryParameters;
@@ -242,6 +254,7 @@ class S3 : RESTClient
         size_t chunkSize = 512*1024,
         )
     {
+        import std.conv : to;
         InetHeaderMap headers;
         headers["Content-Type"] = contentType;
         headers["x-amz-storage-class"] = storageClass.to!string;
@@ -268,6 +281,9 @@ class S3 : RESTClient
     {
         import std.array: appender, uninitializedArray;
         import std.algorithm.comparison: min;
+        import std.exception: enforce;
+        import vibe.core.log : logDebug, logWarn;
+        import vibe.stream.memory : createMemoryStream;
         logDebug("multipartUpload for %s ...", resource);
         enforce(partSize >= 5 * 1024 * 1024, "multipartUpload: minimal allowed part size is 5 MB.");
         auto id = startMultipartUpload(resource, headers, contentType, storageClass, expires);
@@ -322,6 +338,8 @@ class S3 : RESTClient
         size_t chunkSize = 512*1024,
         )
     {
+        import std.conv : to;
+        import vibe.core.log : logDebug;
         string[string] queryParameters = [
             "partNumber": part.to!string,
             "uploadId": id,
@@ -346,6 +364,7 @@ class S3 : RESTClient
         SysTime expires = SysTime.init,
         )
     {
+        import std.conv : to;
         headers["Content-Type"] = contentType;
         headers["x-amz-storage-class"] = storageClass.to!string;
         string[] signedHeaders = ["x-amz-storage-class"];
@@ -448,6 +467,7 @@ class S3 : RESTClient
     auto download(string resource, string saveTo,
                 string[string] queryParameters = null, InetHeaderMap headers = InetHeaderMap.init)
     {
+        import vibe.core.file : openFile, FileMode;
         auto file = openFile(saveTo, FileMode.createTrunc);
         scope(exit)
             file.close();
