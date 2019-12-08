@@ -198,7 +198,7 @@ abstract class RESTClient {
             resp = requestHTTP(url, (scope HTTPClientRequest req) {
                 req.method = method;
                 
-                foreach(key, value; headers)
+                foreach(key, value; headers.byKeyValue)
                     req.headers[key] = value;
 
                 req.headers["host"] = endpoint;
@@ -272,7 +272,7 @@ abstract class RESTClient {
             req.method = method;
             
             //Initialize the headers
-            foreach(key, value; headers)
+            foreach(key, value; headers.byKeyValue)
                 req.headers[key] = value;
 
             //Since we might be doing retries, update the date

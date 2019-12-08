@@ -267,7 +267,7 @@ struct SignableChunk
 {
     static immutable string emptyHash;
 
-    static this()
+    shared static this()
     {
         emptyHash = hash([]);
     }

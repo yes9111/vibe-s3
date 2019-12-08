@@ -6,8 +6,8 @@
 	"authors": ["Rico Huijbers", "Yannick Koechlin", "Manuel Frischknecht", "Ilya Yaroshenko"],
 	"targetType": "sourceLibrary",
 	"dependencies": {
-		"vibe-d": "~>0.8.0",
-		"arsd-official:dom": "~>2.0.0",
+		"vibe-d": "~>0.8.5",
+		"arsd-official:dom": "~>4.2.0",
 		"memutils": "~>0.4.7"
 	},
 	"subConfigurations": {
